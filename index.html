@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XperTeC — Diagnostic & expertise technique du bâtiment</title>
+  <meta name="description" content="XperTeC : diagnostic du bâti, recherche de fuites, inspections et rapports techniques non judiciaires pour ACP, syndics et gestionnaires." />
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --card:#101827;
+      --muted:#9aa4b2;
+      --text:#e6edf6;
+      --line:rgba(255,255,255,.08);
+      --accent:#6ee7ff;
+      --accent2:#a78bfa;
+      --ok:#34d399;
+      --warn:#fbbf24;
+      --danger:#fb7185;
+      --shadow: 0 20px 60px rgba(0,0,0,.35);
+      --radius: 18px;
+      --max: 1120px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--font);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 800px at 20% -10%, rgba(110,231,255,.18), transparent 55%),
+        radial-gradient(900px 700px at 95% 0%, rgba(167,139,250,.18), transparent 45%),
+        radial-gradient(900px 700px at 40% 120%, rgba(52,211,153,.12), transparent 45%),
+        var(--bg);
+      line-height:1.55;
+    }
+    a{color:inherit}
+    .wrap{max-width:var(--max); margin:0 auto; padding:28px 18px 70px}
+    .nav{
+      display:flex; align-items:center; justify-content:space-between; gap:16px;
+      padding:14px 16px; border:1px solid var(--line); border-radius:999px; background:rgba(16,24,39,.55);
+      backdrop-filter: blur(10px);
+      position: sticky; top:14px; z-index:30;
+    }
+    .brand{display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.4px}
+    .logo{
+      width:34px; height:34px; border-radius:12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 10px 30px rgba(110,231,255,.15);
+    }
+    .navlinks{display:flex; gap:14px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
+    .navlinks a{
+      text-decoration:none; color:var(--muted); font-weight:600; font-size:14px;
+      padding:8px 10px; border-radius:999px;
+    }
+    .navlinks a:hover{color:var(--text); background:rgba(255,255,255,.06)}
+    .cta{
+      background: linear-gradient(135deg, rgba(110,231,255,.18), rgba(167,139,250,.18));
+      border: 1px solid rgba(255,255,255,.12);
+      color:var(--text);
+      text-decoration:none;
+      padding:10px 14px;
+      border-radius:999px;
+      font-weight:800;
+      box-shadow: var(--shadow);
+    }
+    .cta:hover{transform: translateY(-1px)}
+    .hero{
+      margin-top:26px;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:18px;
+      align-items:stretch;
+    }
+    @media (max-width: 960px){
+      .hero{grid-template-columns: 1fr}
+      .nav{position:relative; top:auto}
+    }
+    .card{
+      border:1px solid var(--line);
+      background: rgba(16,24,39,.55);
+      backdrop-filter: blur(12px);
+      border-radius: var(--radius);
+      padding:22px;
+      box-shadow: var(--shadow);
+    }
+    h1{
+      margin:0 0 10px;
+      font-size:44px;
+      line-height:1.06;
+      letter-spacing:-.6px;
+    }
+    @media (max-width: 520px){ h1{font-size:36px} }
+    .lead{color:var(--muted); font-size:16px; margin:0 0 16px}
+    .badges{display:flex; gap:10px; flex-wrap:wrap; margin:14px 0 0}
+    .badge{
+      font-size:13px; color:var(--text);
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+    }
+    .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:14px}
+    @media (max-width: 960px){ .grid3{grid-template-columns:1fr} }
+    .kpi{display:grid; gap:8px}
+    .kpi strong{font-size:18px}
+    .muted{color:var(--muted)}
+    .section{margin-top:18px}
+    .section h2{
+      font-size:22px; margin:0 0 10px; letter-spacing:-.2px
+    }
+    .pills{display:flex; flex-wrap:wrap; gap:10px}
+    .pill{
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      font-weight:700;
+      font-size:14px;
+    }
+    .pill small{display:block; font-weight:600; color:var(--muted); margin-top:4px}
+    .list{margin:0; padding-left:18px; color:var(--muted)}
+    .list li{margin:8px 0}
+    .two{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+    @media (max-width: 960px){ .two{grid-template-columns:1fr} }
+    .note{
+      border-left:3px solid rgba(110,231,255,.7);
+      padding:12px 12px 12px 14px;
+      border-radius:12px;
+      background: rgba(110,231,255,.06);
+      color: var(--muted);
+      font-size:14px;
+    }
+    .faq details{
+      border:1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.03);
+      padding:12px 14px;
+      margin:10px 0;
+    }
+    .faq summary{cursor:pointer; font-weight:800}
+    form{display:grid; gap:10px}
+    input, textarea{
+      width:100%;
+      padding:12px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.25);
+      color:var(--text);
+      outline:none;
+      font-size:14px;
+    }
+    textarea{min-height:120px; resize:vertical}
+    button{
+      padding:12px 14px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.18);
+      background: linear-gradient(135deg, rgba(110,231,255,.22), rgba(167,139,250,.22));
+      color:var(--text);
+      font-weight:900;
+      cursor:pointer;
+      box-shadow: var(--shadow);
+    }
+    button:hover{transform: translateY(-1px)}
+    footer{margin-top:18px; color:var(--muted); font-size:13px}
+    .sep{height:1px; background:var(--line); margin:14px 0}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header class="nav">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          XperTeC
+          <div class="muted" style="font-size:12px; font-weight:700;">Diagnostic & expertise technique</div>
+        </div>
+      </div>
+      <nav class="navlinks" aria-label="Navigation">
+        <a href="#services">Services</a>
+        <a href="#methode">Méthode</a>
+        <a href="#secteurs">Secteurs</a>
+        <a href="#faq">FAQ</a>
+        <a href="#contact" class="cta">Demander un devis</a>
+      </nav>
+    </header>
+
+    <main class="hero">
+      <section class="card">
+        <h1>Diagnostiquer, localiser, expliquer.</h1>
+        <p class="lead">
+          XperTeC accompagne <strong>ACP, syndics et gestionnaires</strong> dans le diagnostic des désordres
+          (infiltrations, humidité, pathologies de façade/toiture) via inspections terrain, mesures et rapports structurés.
+        </p>
+
+        <div class="badges">
+          <div class="badge">Rapports techniques <strong>non judiciaires</strong></div>
+          <div class="badge">Inspection toiture / façade / points singuliers</div>
+          <div class="badge">Approche méthodique & documentée</div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="two">
+          <div class="kpi">
+            <strong>Diagnostic du bâti</strong>
+            <div class="muted">Constat, hypothèses, essais, conclusions & recommandations.</div>
+          </div>
+          <div class="kpi">
+            <strong>Recherche de fuite</strong>
+            <div class="muted">Mesures non destructives + stratégie d’investigation.</div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card">
+        <h2 style="margin:0 0 10px;">Demande rapide</h2>
+        <p class="muted" style="margin:0 0 12px;">
+          Réponse sous 24–48h (ouvré). Indique l’adresse, le niveau, le type de désordre et depuis quand.
+        </p>
+
+        <div class="note">
+          <strong>Important :</strong> XperTeC établit des <em>rapports techniques non judiciaires</em> basés sur
+          constatations et essais non destructifs, à titre d’aide à la décision.
+        </div>
+
+        <div class="sep"></div>
+
+        <a class="cta" href="#contact" style="display:inline-block;">Contacter XperTeC</a>
+        <div class="muted" style="margin-top:10px; font-size:13px;">
+          Email : <span class="mono">contact@xpertec.be</span> • Bruxelles & Belgique
+        </div>
+      </aside>
+    </main>
+
+    <section id="services" class="section card">
+      <h2>Services</h2>
+      <div class="grid3">
+        <div class="card" style="background:rgba(255,255,255,.03); box-shadow:none;">
+          <strong>Diagnostic & pathologies</strong>
+          <ul class="list">
+            <li>Analyse des désordres (humidité, fissures, dégradations, corrosion)</li>
+            <li>Lecture des points singuliers (relevés, solins, corniches, raccords)</li>
+            <li>Recommandations priorisées et chiffrables (optionnel)</li>
+          </ul>
+        </div>
+        <div class="card" style="background:rgba(255,255,255,.03); box-shadow:none;">
+          <strong>Recherche de fuite</strong>
+          <ul class="list">
+            <li>Mesure hygrométrique, inspection ciblée, traçage (selon cas)</li>
+            <li>Stratégie “du haut vers le bas” + contrôle des interfaces</li>
+            <li>Rapport avec hypothèses, essais, résultats & suite à donner</li>
+          </ul>
+        </div>
+        <div class="card" style="background:rgba(255,255,255,.03); box-shadow:none;">
+          <strong>Inspections & suivi</strong>
+          <ul class="list">
+            <li>Inspections périodiques (toitures/terrasses/façades)</li>
+            <li>Contrôle après travaux / réception technique (non réglementaire)</li>
+            <li>Archivage photo & historique des interventions</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sep"></div>
+      <div class="pills">
+        <div class="pill">Toitures plates <small>membranes, relevés, avaloirs, acrotères</small></div>
+        <div class="pill">Façades <small>pierre, briques, joints, menuiseries</small></div>
+        <div class="pill">Zingueries <small>corniches, solins, descentes, noues</small></div>
+        <div class="pill">Points singuliers <small>pénétrations, fixations, ancrages, EP</small></div>
+      </div>
+    </section>
+
+    <section id="methode" class="section card">
+      <h2>Méthodologie</h2>
+      <div class="two">
+        <div>
+          <strong>1) Collecte & contexte</strong>
+          <ul class="list">
+            <li>Historique, météo, temporalité (immédiat / différé), zones impactées</li>
+            <li>Documents disponibles (plans, photos, rapports antérieurs)</li>
+          </ul>
+
+          <div style="height:10px"></div>
+
+          <strong>2) Inspection & mesures</strong>
+          <ul class="list">
+            <li>Visuel détaillé + photos géolocalisées (si nécessaire)</li>
+            <li>Mesures non destructives et contrôles ciblés</li>
+          </ul>
+        </div>
+
+        <div>
+          <strong>3) Analyse & hypothèses</strong>
+          <ul class="list">
+            <li>Chemins probables de l’eau / interfaces critiques</li>
+            <li>Classement des causes : probable / possible / à exclure</li>
+          </ul>
+
+          <div style="height:10px"></div>
+
+          <strong>4) Rapport & recommandations</strong>
+          <ul class="list">
+            <li>Conclusion argumentée + actions correctives</li>
+            <li>Option : plan de suivi / contrôle post-travaux</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sep"></div>
+      <div class="note">
+        <strong>Nature du rapport :</strong> document technique <em>non judiciaire</em>, établi sur base de constatations et essais non destructifs,
+        à titre d’aide à la décision. À l’exclusion de toute mission réservée légalement.
+      </div>
+    </section>
+
+    <section id="secteurs" class="section card">
+      <h2>Secteurs</h2>
+      <div class="grid3">
+        <div class="card" style="background:rgba(255,255,255,.03); box-shadow:none;">
+          <strong>ACP / Copropriétés</strong>
+          <div class="muted">Rapports clairs, actionnables, utiles en AG.</div>
+        </div>
+        <div class="card" style="background:rgba(255,255,255,.03); box-shadow:none;">
+          <strong>Syndics / Gestionnaires</strong>
+          <div class="muted">Diagnostics rapides, priorisation, suivi et historique.</div>
+        </div>
+        <div class="card" style="background:rgba(255,255,255,.03); box-shadow:none;">
+          <strong>Entreprises / Maîtrise d’œuvre</strong>
+          <div class="muted">Analyse des causes, points singuliers, contrôle technique non réglementaire.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq" class="section card faq">
+      <h2>FAQ</h2>
+      <details>
+        <summary>Intervenez-vous uniquement à Bruxelles ?</summary>
+        <div class="muted" style="margin-top:8px;">Non. XperTeC intervient à Bruxelles et en Belgique, selon le type de mission.</div>
+      </details>
+      <details>
+        <summary>Est-ce un rapport “officiel” ?</summary>
+        <div class="muted" style="margin-top:8px;">
+          Le rapport est un <strong>rapport technique non judiciaire</strong> : il sert à comprendre, localiser et recommander.
+          Il n’a pas de portée réglementaire ou judiciaire.
+        </div>
+      </details>
+      <details>
+        <summary>Combien coûte une recherche de fuite ?</summary>
+        <div class="muted" style="margin-top:8px;">Cela dépend de l’accès, de la hauteur, des zones à contrôler et du temps sur site. Une estimation est envoyée après un bref échange.</div>
+      </details>
+      <details>
+        <summary>Faites-vous aussi les travaux ?</summary>
+        <div class="muted" style="margin-top:8px;">
+          XperTeC peut rester strictement sur le diagnostic. Si une mise en œuvre est nécessaire, elle peut être réalisée par une entreprise distincte.
+        </div>
+      </details>
+    </section>
+
+    <section id="contact" class="section card">
+      <h2>Contact</h2>
+      <div class="two">
+        <div>
+          <p class="muted" style="margin-top:0;">
+            Décris le problème (où, quand, depuis quand).  
+            Ajoute l’adresse, le niveau/lot, et des photos si tu en as.
+          </p>
+          <div class="note">
+            Email : <span class="mono">contact@xpertec.be</span><br/>
+            Zone : Bruxelles • Belgique
+          </div>
+          <div class="sep"></div>
+          <p class="muted">
+            Tu peux aussi cliquer ici pour préparer un email :
+            <a class="cta" style="display:inline-block; margin-top:10px;"
+              href="mailto:contact@xpertec.be?subject=Demande%20d%27expertise%20-%20XperTeC&body=Bonjour%2C%0A%0AAdresse%20%3A%20%0ANiveau%20%2F%20zone%20%3A%20%0ASympt%C3%B4mes%20%3A%20%0ADepuis%20quand%20%3A%20%0AConditions%20(pluie%2Fvent)%20%3A%20%0ADocuments%2FPhotos%20disponibles%20%3A%20%0A%0AMerci%2C">
+              Envoyer un email
+            </a>
+          </p>
+        </div>
+
+        <div>
+          <form id="contactForm">
+            <input required name="name" placeholder="Nom / Société" />
+            <input required type="email" name="email" placeholder="Email" />
+            <input name="phone" placeholder="Téléphone (optionnel)" />
+            <textarea required name="message" placeholder="Décris la situation : adresse, étage/lot, quand ça arrive, etc."></textarea>
+            <button type="submit">Préparer l’email</button>
+            <div class="muted" id="formHint" style="font-size:13px;"></div>
+          </form>
+        </div>
+      </div>
+
+      <div class="sep"></div>
+      <div class="muted" style="font-size:13px;">
+        <strong>Mentions :</strong> XperTeC — Diagnostic & expertise technique du bâtiment.  
+        Rapports techniques non judiciaires, à titre d’aide à la décision.  
+        <span class="mono">TVA / BCE : à compléter</span>
+      </div>
+    </section>
+
+    <footer>
+      <div class="sep"></div>
+      © <span id="year"></span> XperTeC. Tous droits réservés.
+    </footer>
+  </div>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    const form = document.getElementById("contactForm");
+    const hint = document.getElementById("formHint");
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const data = new FormData(form);
+
+      const name = encodeURIComponent(data.get("name"));
+      const email = encodeURIComponent(data.get("email"));
+      const phone = encodeURIComponent(data.get("phone") || "");
+      const message = encodeURIComponent(data.get("message"));
+
+      const subject = encodeURIComponent("Demande d'expertise - XperTeC");
+      const body =
+        "Bonjour,\n\n" +
+        "Nom / Société : " + decodeURIComponent(name) + "\n" +
+        "Email : " + decodeURIComponent(email) + "\n" +
+        (phone ? "Téléphone : " + decodeURIComponent(phone) + "\n" : "") +
+        "\n" +
+        "Message :\n" + decodeURIComponent(message) + "\n\n" +
+        "Merci,\n";
+
+      const mailto = `mailto:contact@xpertec.be?subject=${subject}&body=${encodeURIComponent(body)}`;
+
+      hint.textContent = "Ouverture de votre client email… si rien ne se passe, vérifiez vos réglages Mail / navigateur.";
+      window.location.href = mailto;
+    });
+  </script>
+</body>
+</html>
