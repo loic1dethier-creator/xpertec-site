@@ -98,12 +98,13 @@
     }
     @keyframes pulse{0%{transform:scale(1); opacity:.8}100%{transform:scale(1.5); opacity:0}}
     .hint{font-size:12px; color:var(--muted)}
-    .row{display:flex; gap:8px; width:100%; max-width:520px}
-    .row input{
+    .row{display:flex; gap:8px; width:100%; max-width:520px; align-items:flex-end}
+    .row textarea{
       flex:1; padding:11px 14px; border-radius:14px; border:1px solid var(--line);
       background:rgba(0,0,0,.25); color:var(--text); font-size:15px; outline:none;
+      font-family:var(--font); line-height:1.4; resize:none; max-height:140px; overflow-y:auto;
     }
-    .row .send{padding:0 16px; border-radius:14px; border:1px solid var(--line); background:rgba(255,255,255,.06); color:var(--text); font-weight:800; cursor:pointer}
+    .row .send{padding:0 16px; height:44px; flex:0 0 auto; border-radius:14px; border:1px solid var(--line); background:rgba(255,255,255,.06); color:var(--text); font-weight:800; cursor:pointer}
 
     /* Réglages */
     .sheet{
@@ -166,7 +167,7 @@
     </div>
     <div class="hint" id="hint">Tapez pour parler · re-tapez pour arrêter</div>
     <div class="row">
-      <input id="textInput" placeholder="…ou écrivez ici" />
+      <textarea id="textInput" rows="1" placeholder="…ou écrivez ici" aria-label="Écrire un message"></textarea>
       <button class="send" id="sendBtn">Envoyer</button>
     </div>
   </div>
@@ -243,7 +244,16 @@
       ttsOn: localStorage.getItem("va_tts") !== "0",
       continuous: localStorage.getItem("va_cont") === "1"
     };
-    var history = []; // [{role, content}]
+    // Contexte envoyé à l'API (format Anthropic) + transcription visible
+    var history = JSON.parse(localStorage.getItem("va_history") || "[]");
+    var transcript = JSON.parse(localStorage.getItem("va_transcript") || "[]");
+
+    function saveConvo(){
+      try{
+        localStorage.setItem("va_history", JSON.stringify(history.slice(-40)));
+        localStorage.setItem("va_transcript", JSON.stringify(transcript.slice(-200)));
+      }catch(e){}
+    }
 
     // ---------- Raccourcis DOM ----------
     var $ = function(id){ return document.getElementById(id); };
@@ -251,7 +261,7 @@
     var statusLine = $("statusLine"), hint = $("hint");
 
     // ---------- Affichage messages ----------
-    function addMsg(role, text){
+    function renderMsg(role, text){
       if(empty) empty.style.display = "none";
       var el = document.createElement("div");
       el.className = "msg " + (role === "user" ? "user" : role === "system" ? "sys" : "ai");
@@ -266,6 +276,13 @@
       el.appendChild(span);
       chat.appendChild(el);
       chat.scrollTop = chat.scrollHeight;
+      return span;
+    }
+    // Affiche ET mémorise (pour restauration après fermeture)
+    function addMsg(role, text){
+      var span = renderMsg(role, text);
+      transcript.push({ role:role, text:text });
+      saveConvo();
       return span;
     }
     function addTyping(){
@@ -390,6 +407,7 @@
     function sendToAI(text){
       addMsg("user", text);
       history.push({ role:"user", content:text });
+      saveConvo();
 
       if(!cfg.apiKey){
         var r = offlineReply(text);
@@ -418,6 +436,7 @@
 
         // L'assistant a-t-il demandé une action ?
         history.push({ role:"assistant", content:blocks });
+        saveConvo();
 
         if(toolUses.length){
           // Parle d'abord, puis exécute (la navigation peut changer d'app)
@@ -429,6 +448,7 @@
             results.push({ type:"tool_result", tool_use_id:tu.id, content:summary });
           });
           history.push({ role:"user", content:results });
+          saveConvo();
           // Pas de relance immédiate : on a déjà confirmé vocalement et lancé l'action.
           typingEl.remove(); awaitingReply = false; setStatus("");
         } else {
@@ -515,21 +535,33 @@
       if(listening) stopListening(); else startListening();
     });
 
-    // ---------- Saisie texte ----------
+    // ---------- Saisie texte (multi-lignes, auto-extensible) ----------
+    var textInput = $("textInput");
+    function autoGrow(){
+      textInput.style.height = "auto";
+      textInput.style.height = Math.min(textInput.scrollHeight, 140) + "px";
+    }
     function sendText(){
-      var v = $("textInput").value.trim();
+      var v = textInput.value.trim();
       if(!v) return;
-      $("textInput").value = "";
+      textInput.value = "";
+      autoGrow();
       sendToAI(v);
     }
     $("sendBtn").addEventListener("click", sendText);
-    $("textInput").addEventListener("keydown", function(e){ if(e.key === "Enter") sendText(); });
+    textInput.addEventListener("input", autoGrow);
+    textInput.addEventListener("keydown", function(e){
+      // Entrée = envoyer ; Maj+Entrée = nouvelle ligne (utile au clavier)
+      if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); sendText(); }
+    });
 
     // ---------- Effacer ----------
     $("clearBtn").addEventListener("click", function(){
-      if(!history.length) return;
+      if(!history.length && !transcript.length) return;
       if(confirm("Effacer toute la conversation ?")){
-        history = [];
+        history = []; transcript = [];
+        localStorage.removeItem("va_history");
+        localStorage.removeItem("va_transcript");
         Array.prototype.slice.call(chat.querySelectorAll(".msg")).forEach(function(m){ m.remove(); });
         if(empty) empty.style.display = "";
       }
@@ -572,7 +604,11 @@
     // ---------- Init ----------
     setStatus("");
     if(!SR){ hint.textContent = "Reconnaissance vocale non dispo : écrivez ci-dessous."; }
-    if(!cfg.apiKey){ /* l'écran d'accueil invite déjà à configurer */ }
+
+    // Restaure la conversation précédente (sauvegardée sur l'appareil)
+    if(transcript.length){
+      transcript.forEach(function(m){ renderMsg(m.role, m.text); });
+    }
   })();
   </script>
 </body>
