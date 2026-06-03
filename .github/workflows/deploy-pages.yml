@@ -1,0 +1,44 @@
+name: Déploiement GitHub Pages
+
+# Met le site en ligne automatiquement à chaque modification de la branche.
+on:
+  push:
+    branches:
+      - claude/voice-ai-agent-iphone-BZtDa
+  workflow_dispatch: {}
+
+# Droits nécessaires pour publier sur Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Un seul déploiement à la fois.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Configurer Pages (et l'activer si besoin)
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Préparer les fichiers du site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Publie tout le dépôt. L'agent vocal est dans /voice-agent/
+          path: '.'
+
+      - name: Déployer
+        id: deployment
+        uses: actions/deploy-pages@v4
