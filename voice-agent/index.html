@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <title>Agent Vocal IA</title>
+  <meta name="description" content="Assistant vocal IA personnel : parlez, il comprend et répond à voix haute." />
+
+  <!-- PWA / iPhone : ajout à l'écran d'accueil façon application -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#0b0f17" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Agent Vocal" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --card:#101827;
+      --muted:#9aa4b2;
+      --text:#e6edf6;
+      --line:rgba(255,255,255,.08);
+      --accent:#6ee7ff;
+      --accent2:#a78bfa;
+      --ok:#34d399;
+      --danger:#fb7185;
+      --radius:18px;
+      --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji";
+    }
+    *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+    html,body{height:100%; margin:0}
+    body{
+      font-family:var(--font); color:var(--text);
+      background:
+        radial-gradient(1200px 800px at 20% -10%, rgba(110,231,255,.16), transparent 55%),
+        radial-gradient(900px 700px at 95% 0%, rgba(167,139,250,.16), transparent 45%),
+        var(--bg);
+      display:flex; flex-direction:column;
+      min-height:100dvh;
+      overflow:hidden;
+    }
+    /* Zone sûre iPhone (encoche / barre du bas) */
+    header,.composer{padding-left:max(16px, env(safe-area-inset-left)); padding-right:max(16px, env(safe-area-inset-right))}
+    header{padding-top:max(14px, env(safe-area-inset-top))}
+    .composer{padding-bottom:max(16px, env(safe-area-inset-bottom))}
+
+    header{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding-bottom:12px; border-bottom:1px solid var(--line);
+    }
+    .brand{display:flex; align-items:center; gap:10px; font-weight:800}
+    .logo{width:32px; height:32px; border-radius:10px; background:linear-gradient(135deg,var(--accent),var(--accent2))}
+    .brand small{display:block; font-weight:600; color:var(--muted); font-size:11px}
+    .iconbtn{
+      width:40px; height:40px; border-radius:12px; border:1px solid var(--line);
+      background:rgba(255,255,255,.04); color:var(--text); font-size:18px; cursor:pointer;
+      display:grid; place-items:center;
+    }
+    .iconbtn:active{transform:scale(.95)}
+
+    /* Conversation */
+    .chat{
+      flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:12px;
+      -webkit-overflow-scrolling:touch;
+    }
+    .msg{max-width:85%; padding:11px 14px; border-radius:16px; line-height:1.5; white-space:pre-wrap; word-wrap:break-word; font-size:15px}
+    .msg.user{align-self:flex-end; background:linear-gradient(135deg, rgba(110,231,255,.22), rgba(167,139,250,.22)); border:1px solid rgba(255,255,255,.12); border-bottom-right-radius:6px}
+    .msg.ai{align-self:flex-start; background:rgba(255,255,255,.05); border:1px solid var(--line); border-bottom-left-radius:6px}
+    .msg.sys{align-self:center; background:transparent; color:var(--muted); font-size:13px; text-align:center; max-width:95%}
+    .msg .who{display:block; font-size:11px; color:var(--muted); margin-bottom:3px; font-weight:700; letter-spacing:.3px}
+    .typing{display:inline-flex; gap:4px}
+    .typing i{width:6px; height:6px; border-radius:50%; background:var(--muted); animation:blink 1.2s infinite}
+    .typing i:nth-child(2){animation-delay:.2s}
+    .typing i:nth-child(3){animation-delay:.4s}
+    @keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+
+    .empty{margin:auto; text-align:center; color:var(--muted); max-width:320px; padding:20px}
+    .empty h2{color:var(--text); margin:0 0 8px; font-size:20px}
+    .empty p{margin:6px 0; font-size:14px}
+
+    /* Barre micro */
+    .composer{padding-top:12px; border-top:1px solid var(--line); display:flex; flex-direction:column; gap:10px; align-items:center}
+    .live{min-height:20px; font-size:14px; color:var(--muted); text-align:center; width:100%; padding:0 8px}
+    .live.active{color:var(--accent)}
+    .micwrap{position:relative; display:grid; place-items:center}
+    .mic{
+      width:84px; height:84px; border-radius:50%; border:none; cursor:pointer;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      color:#06121a; font-size:34px; display:grid; place-items:center;
+      box-shadow:0 12px 40px rgba(110,231,255,.3); transition:transform .12s;
+    }
+    .mic:active{transform:scale(.94)}
+    .mic.listening{background:linear-gradient(135deg,var(--danger),#f59e0b); color:#fff}
+    .mic.listening::after{
+      content:""; position:absolute; inset:-10px; border-radius:50%;
+      border:3px solid rgba(251,113,133,.5); animation:pulse 1.4s ease-out infinite;
+    }
+    @keyframes pulse{0%{transform:scale(1); opacity:.8}100%{transform:scale(1.5); opacity:0}}
+    .hint{font-size:12px; color:var(--muted)}
+    .row{display:flex; gap:8px; width:100%; max-width:520px}
+    .row input{
+      flex:1; padding:11px 14px; border-radius:14px; border:1px solid var(--line);
+      background:rgba(0,0,0,.25); color:var(--text); font-size:15px; outline:none;
+    }
+    .row .send{padding:0 16px; border-radius:14px; border:1px solid var(--line); background:rgba(255,255,255,.06); color:var(--text); font-weight:800; cursor:pointer}
+
+    /* Réglages */
+    .sheet{
+      position:fixed; inset:0; background:rgba(0,0,0,.55); backdrop-filter:blur(4px);
+      display:none; align-items:flex-end; z-index:50;
+    }
+    .sheet.open{display:flex}
+    .panel{
+      width:100%; max-height:88dvh; overflow-y:auto; background:var(--card);
+      border-top-left-radius:22px; border-top-right-radius:22px; border:1px solid var(--line);
+      padding:18px 18px max(26px, env(safe-area-inset-bottom));
+    }
+    .panel h3{margin:4px 0 14px}
+    .field{margin:0 0 14px}
+    .field label{display:block; font-size:13px; color:var(--muted); margin-bottom:6px; font-weight:700}
+    .field input, .field select, .field textarea{
+      width:100%; padding:11px 12px; border-radius:12px; border:1px solid var(--line);
+      background:rgba(0,0,0,.25); color:var(--text); font-size:15px; outline:none; font-family:var(--font);
+    }
+    .field textarea{min-height:90px; resize:vertical}
+    .field .desc{font-size:12px; color:var(--muted); margin-top:6px}
+    .toggle{display:flex; align-items:center; justify-content:space-between; gap:12px}
+    .switch{position:relative; width:50px; height:30px; flex:0 0 auto}
+    .switch input{opacity:0; width:0; height:0}
+    .slider{position:absolute; inset:0; background:rgba(255,255,255,.15); border-radius:999px; transition:.2s}
+    .slider::before{content:""; position:absolute; width:24px; height:24px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s}
+    .switch input:checked + .slider{background:linear-gradient(135deg,var(--accent),var(--accent2))}
+    .switch input:checked + .slider::before{transform:translateX(20px)}
+    .btn{width:100%; padding:13px; border-radius:14px; border:1px solid var(--line); background:linear-gradient(135deg, rgba(110,231,255,.22), rgba(167,139,250,.22)); color:var(--text); font-weight:900; font-size:15px; cursor:pointer; margin-top:4px}
+    .btn.ghost{background:rgba(255,255,255,.04)}
+    .a{color:var(--accent); text-decoration:none}
+    .warn{font-size:12px; color:var(--muted); border-left:3px solid rgba(251,191,36,.6); background:rgba(251,191,36,.06); padding:10px 12px; border-radius:10px; margin-top:8px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo"></div>
+      <div>Agent Vocal IA<small id="statusLine">Appuyez sur le micro pour parler</small></div>
+    </div>
+    <div style="display:flex; gap:8px">
+      <button class="iconbtn" id="clearBtn" title="Effacer la conversation" aria-label="Effacer">🗑️</button>
+      <button class="iconbtn" id="settingsBtn" title="Réglages" aria-label="Réglages">⚙️</button>
+    </div>
+  </header>
+
+  <main class="chat" id="chat">
+    <div class="empty" id="empty">
+      <h2>👋 Bonjour</h2>
+      <p>Appuyez sur le micro et <strong>parlez naturellement</strong>. L'agent répond à voix haute et peut <strong>agir sur votre iPhone</strong> : appeler, SMS, e-mail, itinéraire, lancer un Raccourci…</p>
+      <p style="margin-top:14px">Pour activer l'IA, ouvrez <strong>⚙️ Réglages</strong> et collez votre clé API Claude.</p>
+      <p style="opacity:.7; font-size:13px">Astuce : créez des <em>Raccourcis Apple</em> et dites leur nom à l'agent pour qu'il les déclenche.</p>
+    </div>
+  </main>
+
+  <div class="composer">
+    <div class="live" id="live"></div>
+    <div class="micwrap">
+      <button class="mic" id="mic" aria-label="Parler">🎙️</button>
+    </div>
+    <div class="hint" id="hint">Tapez pour parler · re-tapez pour arrêter</div>
+    <div class="row">
+      <input id="textInput" placeholder="…ou écrivez ici" />
+      <button class="send" id="sendBtn">Envoyer</button>
+    </div>
+  </div>
+
+  <!-- Réglages -->
+  <div class="sheet" id="sheet">
+    <div class="panel">
+      <h3>⚙️ Réglages</h3>
+
+      <div class="field">
+        <label>Clé API Claude (Anthropic)</label>
+        <input id="apiKey" type="password" placeholder="sk-ant-..." autocomplete="off" />
+        <div class="desc">Obtenue sur <a class="a" href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. Stockée uniquement sur cet appareil.</div>
+      </div>
+
+      <div class="field">
+        <label>Modèle</label>
+        <select id="model">
+          <option value="claude-haiku-4-5-20251001">Haiku 4.5 — rapide (idéal voix)</option>
+          <option value="claude-sonnet-4-6">Sonnet 4.6 — équilibré</option>
+          <option value="claude-opus-4-8">Opus 4.8 — le plus intelligent</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Langue de reconnaissance</label>
+        <select id="lang">
+          <option value="fr-FR">Français</option>
+          <option value="en-US">English (US)</option>
+          <option value="en-GB">English (UK)</option>
+          <option value="es-ES">Español</option>
+          <option value="de-DE">Deutsch</option>
+          <option value="nl-NL">Nederlands</option>
+          <option value="it-IT">Italiano</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Personnalité / instructions de l'agent</label>
+        <textarea id="systemPrompt" placeholder="Décrivez le rôle de votre agent..."></textarea>
+        <div class="desc">Ex : « Tu es mon assistant personnel. Réponds de façon concise, car tes réponses seront lues à voix haute. »</div>
+      </div>
+
+      <div class="field toggle">
+        <div><label style="margin:0">Réponse à voix haute</label><div class="desc">L'agent lit ses réponses.</div></div>
+        <label class="switch"><input type="checkbox" id="ttsOn" checked /><span class="slider"></span></label>
+      </div>
+
+      <div class="field toggle">
+        <div><label style="margin:0">Écoute continue (mains libres)</label><div class="desc">Relance l'écoute après chaque réponse.</div></div>
+        <label class="switch"><input type="checkbox" id="continuous" /><span class="slider"></span></label>
+      </div>
+
+      <button class="btn" id="saveBtn">Enregistrer</button>
+      <button class="btn ghost" id="closeBtn">Fermer</button>
+
+      <div class="warn">
+        🔒 Votre clé API ne quitte jamais votre iPhone : elle est gardée dans le navigateur (localStorage) et envoyée uniquement à l'API d'Anthropic. N'utilisez cette page que sur votre appareil personnel.
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    "use strict";
+
+    // ---------- État & config persistée ----------
+    var DEFAULT_PROMPT = "Tu es un assistant vocal personnel et amical qui peut agir sur l'iPhone de l'utilisateur. Tes réponses sont lues à voix haute : sois clair, naturel et concis (2 à 4 phrases), sans markdown ni puces. Réponds dans la langue de l'utilisateur.\n\nTu disposes d'outils pour agir : passer un appel, envoyer un SMS ou un e-mail, ouvrir un itinéraire dans Plans, ouvrir une app/un site, et surtout lancer un Raccourci Apple (lancer_raccourci) qui permet de déclencher quasiment n'importe quelle action que l'utilisateur a configurée sur son téléphone. Quand l'utilisateur te demande de faire quelque chose sur son iPhone, utilise l'outil adapté ET annonce brièvement ce que tu fais (ex: « D'accord, j'appelle Marie. »). Si l'action n'est possible que via un Raccourci, utilise lancer_raccourci avec le nom probable du Raccourci. Si une information manque (numéro, nom exact du Raccourci), demande-la avant d'agir.";
+    var cfg = {
+      apiKey: localStorage.getItem("va_key") || "",
+      model: localStorage.getItem("va_model") || "claude-haiku-4-5-20251001",
+      lang: localStorage.getItem("va_lang") || "fr-FR",
+      systemPrompt: localStorage.getItem("va_prompt") || DEFAULT_PROMPT,
+      ttsOn: localStorage.getItem("va_tts") !== "0",
+      continuous: localStorage.getItem("va_cont") === "1"
+    };
+    var history = []; // [{role, content}]
+
+    // ---------- Raccourcis DOM ----------
+    var $ = function(id){ return document.getElementById(id); };
+    var chat = $("chat"), empty = $("empty"), live = $("live"), mic = $("mic");
+    var statusLine = $("statusLine"), hint = $("hint");
+
+    // ---------- Affichage messages ----------
+    function addMsg(role, text){
+      if(empty) empty.style.display = "none";
+      var el = document.createElement("div");
+      el.className = "msg " + (role === "user" ? "user" : role === "system" ? "sys" : "ai");
+      if(role !== "system"){
+        var who = document.createElement("span");
+        who.className = "who";
+        who.textContent = role === "user" ? "Vous" : "Agent";
+        el.appendChild(who);
+      }
+      var span = document.createElement("span");
+      span.textContent = text;
+      el.appendChild(span);
+      chat.appendChild(el);
+      chat.scrollTop = chat.scrollHeight;
+      return span;
+    }
+    function addTyping(){
+      if(empty) empty.style.display = "none";
+      var el = document.createElement("div");
+      el.className = "msg ai";
+      el.innerHTML = '<span class="who">Agent</span><span class="typing"><i></i><i></i><i></i></span>';
+      chat.appendChild(el);
+      chat.scrollTop = chat.scrollHeight;
+      return el;
+    }
+
+    // ---------- Synthèse vocale (TTS) ----------
+    var voices = [];
+    function loadVoices(){ voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : []; }
+    if(window.speechSynthesis){
+      loadVoices();
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+    function pickVoice(){
+      if(!voices.length) loadVoices();
+      var base = cfg.lang.split("-")[0];
+      var exact = voices.filter(function(v){ return v.lang === cfg.lang; });
+      if(exact.length) return exact[0];
+      var partial = voices.filter(function(v){ return v.lang && v.lang.indexOf(base) === 0; });
+      return partial[0] || null;
+    }
+    function speak(text){
+      if(!cfg.ttsOn || !window.speechSynthesis || !text) return;
+      try{
+        window.speechSynthesis.cancel();
+        var u = new SpeechSynthesisUtterance(text);
+        var v = pickVoice();
+        if(v) u.voice = v;
+        u.lang = cfg.lang;
+        u.rate = 1.02;
+        u.onend = function(){ if(cfg.continuous && !awaitingReply) startListening(); };
+        window.speechSynthesis.speak(u);
+      }catch(e){}
+    }
+
+    // ---------- Actions sur l'iPhone (via schémas d'URL & Raccourcis) ----------
+    // iOS interdit le contrôle direct du téléphone. On passe donc par les
+    // "URL schemes" autorisés (appel, SMS, e-mail, plans, ouverture d'app)
+    // et surtout par les RACCOURCIS Apple, qui permettent quasiment tout.
+    var TOOLS = [
+      { name:"passer_appel", description:"Lancer un appel téléphonique vers un numéro.",
+        input_schema:{ type:"object", properties:{ numero:{type:"string", description:"Numéro à appeler, format international si possible (ex: +32475123456)"} }, required:["numero"] } },
+      { name:"envoyer_sms", description:"Préparer un SMS (l'utilisateur confirme l'envoi).",
+        input_schema:{ type:"object", properties:{ numero:{type:"string"}, message:{type:"string"} }, required:["numero","message"] } },
+      { name:"envoyer_email", description:"Préparer un e-mail dans l'app Mail.",
+        input_schema:{ type:"object", properties:{ destinataire:{type:"string"}, sujet:{type:"string"}, corps:{type:"string"} }, required:["destinataire"] } },
+      { name:"ouvrir_itineraire", description:"Ouvrir un itinéraire/lieu dans Plans (Apple Maps).",
+        input_schema:{ type:"object", properties:{ destination:{type:"string", description:"Adresse ou nom du lieu"} }, required:["destination"] } },
+      { name:"ouvrir_app_ou_site", description:"Ouvrir une app via son schéma d'URL ou un site web. Ex: 'https://...', 'music://', 'instagram://'.",
+        input_schema:{ type:"object", properties:{ url:{type:"string"} }, required:["url"] } },
+      { name:"lancer_raccourci", description:"Exécuter un Raccourci Apple existant par son nom exact, avec un texte optionnel en entrée. C'est le moyen le plus puissant : tout Raccourci créé par l'utilisateur (allumer une lumière, jouer une playlist, créer un rappel, contrôler la maison, etc.) peut être déclenché ici.",
+        input_schema:{ type:"object", properties:{ nom:{type:"string", description:"Nom exact du Raccourci"}, entree:{type:"string", description:"Texte passé au Raccourci (optionnel)"} }, required:["nom"] } }
+    ];
+
+    function enc(s){ return encodeURIComponent(s || ""); }
+    function navigate(url){
+      // Déclenche le schéma d'URL : iOS ouvre l'app correspondante.
+      var a = document.createElement("a");
+      a.href = url; a.style.display = "none"; a.rel = "noopener";
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ a.remove(); }, 500);
+    }
+    function runAction(name, input){
+      input = input || {};
+      switch(name){
+        case "passer_appel":
+          navigate("tel:" + enc(input.numero));
+          return "Appel lancé vers " + input.numero;
+        case "envoyer_sms":
+          navigate("sms:" + enc(input.numero) + "&body=" + enc(input.message));
+          return "SMS préparé pour " + input.numero;
+        case "envoyer_email":
+          navigate("mailto:" + enc(input.destinataire) + "?subject=" + enc(input.sujet) + "&body=" + enc(input.corps));
+          return "E-mail préparé pour " + input.destinataire;
+        case "ouvrir_itineraire":
+          navigate("https://maps.apple.com/?daddr=" + enc(input.destination) + "&dirflg=d");
+          return "Itinéraire ouvert vers " + input.destination;
+        case "ouvrir_app_ou_site":
+          navigate(input.url);
+          return "Ouverture de " + input.url;
+        case "lancer_raccourci":
+          navigate("shortcuts://run-shortcut?name=" + enc(input.nom) + (input.entree ? "&input=text&text=" + enc(input.entree) : ""));
+          return "Raccourci « " + input.nom + " » lancé";
+        default:
+          return "Action inconnue : " + name;
+      }
+    }
+
+    // ---------- Appel à Claude (direct navigateur) ----------
+    var awaitingReply = false;
+    function offlineReply(text){
+      return "Mode hors-ligne : j'ai bien noté « " + text + " ». Pour que je réfléchisse, agisse et réponde vraiment, ajoutez votre clé API Claude dans les réglages (⚙️).";
+    }
+
+    function callClaude(){
+      return fetch("https://api.anthropic.com/v1/messages", {
+        method:"POST",
+        headers:{
+          "content-type":"application/json",
+          "x-api-key":cfg.apiKey,
+          "anthropic-version":"2023-06-01",
+          "anthropic-dangerous-direct-browser-access":"true"
+        },
+        body: JSON.stringify({
+          model: cfg.model,
+          max_tokens: 1024,
+          system: cfg.systemPrompt,
+          tools: TOOLS,
+          messages: history.slice(-20)
+        })
+      }).then(function(res){
+        return res.json().then(function(data){ return { ok:res.ok, status:res.status, data:data }; });
+      });
+    }
+
+    function sendToAI(text){
+      addMsg("user", text);
+      history.push({ role:"user", content:text });
+
+      if(!cfg.apiKey){
+        var r = offlineReply(text);
+        addMsg("ai", r); speak(r);
+        return;
+      }
+
+      awaitingReply = true;
+      setStatus("Réflexion…");
+      var typingEl = addTyping();
+
+      function handle(out){
+        if(!out.ok){
+          typingEl.remove(); awaitingReply = false; setStatus("");
+          var emsg = (out.data && out.data.error && out.data.error.message) || ("Erreur HTTP " + out.status);
+          addMsg("ai", "⚠️ " + emsg);
+          return;
+        }
+        var blocks = out.data.content || [];
+        var textParts = blocks.filter(function(c){ return c.type === "text"; });
+        var toolUses = blocks.filter(function(c){ return c.type === "tool_use"; });
+
+        // Texte parlé (confirmation de l'action)
+        var reply = textParts.map(function(c){ return c.text; }).join("\n").trim();
+        if(reply){ addMsg("ai", reply); }
+
+        // L'assistant a-t-il demandé une action ?
+        history.push({ role:"assistant", content:blocks });
+
+        if(toolUses.length){
+          // Parle d'abord, puis exécute (la navigation peut changer d'app)
+          if(reply) speak(reply);
+          var results = [];
+          toolUses.forEach(function(tu){
+            var summary = runAction(tu.name, tu.input);
+            addMsg("system", "⚡️ " + summary);
+            results.push({ type:"tool_result", tool_use_id:tu.id, content:summary });
+          });
+          history.push({ role:"user", content:results });
+          // Pas de relance immédiate : on a déjà confirmé vocalement et lancé l'action.
+          typingEl.remove(); awaitingReply = false; setStatus("");
+        } else {
+          typingEl.remove(); awaitingReply = false; setStatus("");
+          if(reply) speak(reply); else addMsg("ai", "(réponse vide)");
+        }
+      }
+
+      callClaude().then(handle).catch(function(err){
+        typingEl.remove(); awaitingReply = false; setStatus("");
+        addMsg("ai", "⚠️ Connexion impossible : " + err.message + ". Vérifiez votre réseau et votre clé API.");
+      });
+    }
+
+    // ---------- Reconnaissance vocale (STT) ----------
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    var recog = null, listening = false, wantListen = false, finalText = "";
+
+    function setStatus(t){ statusLine.textContent = t || (SR ? "Appuyez sur le micro pour parler" : "Reconnaissance vocale non disponible"); }
+
+    function buildRecognizer(){
+      if(!SR) return null;
+      var r = new SR();
+      r.lang = cfg.lang;
+      r.interimResults = true;
+      r.continuous = false; // iOS Safari gère mal le mode continu : on relance manuellement
+      r.maxAlternatives = 1;
+
+      r.onstart = function(){
+        listening = true; finalText = "";
+        mic.classList.add("listening"); mic.textContent = "⏹️";
+        live.classList.add("active"); live.textContent = "🎧 J'écoute…";
+        setStatus("Écoute en cours…");
+      };
+      r.onresult = function(e){
+        var interim = "";
+        for(var i=e.resultIndex; i<e.results.length; i++){
+          var res = e.results[i];
+          if(res.isFinal) finalText += res[0].transcript;
+          else interim += res[0].transcript;
+        }
+        live.textContent = (finalText + " " + interim).trim() || "🎧 J'écoute…";
+      };
+      r.onerror = function(e){
+        if(e.error === "not-allowed" || e.error === "service-not-allowed"){
+          wantListen = false;
+          addMsg("system", "🚫 Micro refusé. Autorisez le microphone dans les réglages de Safari pour ce site.");
+        }
+      };
+      r.onend = function(){
+        listening = false;
+        mic.classList.remove("listening"); mic.textContent = "🎙️";
+        live.classList.remove("active");
+        var said = finalText.trim();
+        live.textContent = "";
+        setStatus("");
+        if(said){
+          sendToAI(said);
+        } else if(wantListen){
+          // relance si l'utilisateur veut continuer mais rien n'a été capté
+          try{ r.start(); }catch(e){}
+        }
+      };
+      return r;
+    }
+
+    function startListening(){
+      if(!SR){ addMsg("system","Ce navigateur ne supporte pas la reconnaissance vocale. Utilisez Safari sur iPhone, ou écrivez votre message."); return; }
+      if(listening) return;
+      if(window.speechSynthesis) window.speechSynthesis.cancel(); // ne pas s'écouter parler
+      wantListen = true;
+      if(!recog) recog = buildRecognizer();
+      recog.lang = cfg.lang;
+      try{ recog.start(); }catch(e){ /* déjà démarré */ }
+    }
+    function stopListening(){
+      wantListen = false;
+      if(recog && listening){ try{ recog.stop(); }catch(e){} }
+    }
+
+    mic.addEventListener("click", function(){
+      // Le premier tap (geste utilisateur) débloque aussi la synthèse vocale sur iOS
+      if(window.speechSynthesis && cfg.ttsOn){ try{ var w=new SpeechSynthesisUtterance(""); window.speechSynthesis.speak(w); }catch(e){} }
+      if(listening) stopListening(); else startListening();
+    });
+
+    // ---------- Saisie texte ----------
+    function sendText(){
+      var v = $("textInput").value.trim();
+      if(!v) return;
+      $("textInput").value = "";
+      sendToAI(v);
+    }
+    $("sendBtn").addEventListener("click", sendText);
+    $("textInput").addEventListener("keydown", function(e){ if(e.key === "Enter") sendText(); });
+
+    // ---------- Effacer ----------
+    $("clearBtn").addEventListener("click", function(){
+      if(!history.length) return;
+      if(confirm("Effacer toute la conversation ?")){
+        history = [];
+        Array.prototype.slice.call(chat.querySelectorAll(".msg")).forEach(function(m){ m.remove(); });
+        if(empty) empty.style.display = "";
+      }
+    });
+
+    // ---------- Réglages ----------
+    var sheet = $("sheet");
+    function openSheet(){
+      $("apiKey").value = cfg.apiKey;
+      $("model").value = cfg.model;
+      $("lang").value = cfg.lang;
+      $("systemPrompt").value = cfg.systemPrompt;
+      $("ttsOn").checked = cfg.ttsOn;
+      $("continuous").checked = cfg.continuous;
+      sheet.classList.add("open");
+    }
+    function closeSheet(){ sheet.classList.remove("open"); }
+    $("settingsBtn").addEventListener("click", openSheet);
+    $("closeBtn").addEventListener("click", closeSheet);
+    sheet.addEventListener("click", function(e){ if(e.target === sheet) closeSheet(); });
+    $("saveBtn").addEventListener("click", function(){
+      cfg.apiKey = $("apiKey").value.trim();
+      cfg.model = $("model").value;
+      cfg.lang = $("lang").value;
+      cfg.systemPrompt = $("systemPrompt").value.trim() || DEFAULT_PROMPT;
+      cfg.ttsOn = $("ttsOn").checked;
+      cfg.continuous = $("continuous").checked;
+      localStorage.setItem("va_key", cfg.apiKey);
+      localStorage.setItem("va_model", cfg.model);
+      localStorage.setItem("va_lang", cfg.lang);
+      localStorage.setItem("va_prompt", cfg.systemPrompt);
+      localStorage.setItem("va_tts", cfg.ttsOn ? "1" : "0");
+      localStorage.setItem("va_cont", cfg.continuous ? "1" : "0");
+      if(recog) recog.lang = cfg.lang;
+      closeSheet();
+      setStatus("");
+      addMsg("system", "✅ Réglages enregistrés." + (cfg.apiKey ? " IA Claude activée." : " (Pas de clé : mode dictée.)"));
+    });
+
+    // ---------- Init ----------
+    setStatus("");
+    if(!SR){ hint.textContent = "Reconnaissance vocale non dispo : écrivez ci-dessous."; }
+    if(!cfg.apiKey){ /* l'écran d'accueil invite déjà à configurer */ }
+  })();
+  </script>
+</body>
+</html>
